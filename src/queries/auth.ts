@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 type LoginCredentials = {
   email: string;
@@ -6,6 +6,7 @@ type LoginCredentials = {
 };
 
 export const useLoginMutation = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationKey: ["login"],
     mutationFn: async (credentials: LoginCredentials) => {
@@ -22,16 +23,22 @@ export const useLoginMutation = () => {
         throw new Error("Something went wrong");
       }
     },
+    onSuccess: () => {
+      queryClient.resetQueries({ queryKey: ["current-user"] });
+    },
   });
 };
 
-export const useUserDataQuery = () => {};
-
 export const useLogoutMutation = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationKey: ["logout"],
     mutationFn: async () => {
       await fetch("/api/logout");
+    },
+    onSuccess: () => {
+      queryClient.resetQueries({ queryKey: ["current-user"] });
     },
   });
 };
@@ -42,12 +49,13 @@ export const useGetCurrentUserQuery = () => {
     queryFn: async () => {
       const response = await fetch("/api/me");
       if (response.ok) {
-        return (await response.json()).user as {
+        const data = (await response.json()).user as {
           username: string;
           email: string;
         };
+        return { status: "success", user: data };
       }
-      throw Error("Unauthenticated");
+      return { status: "failure", user: null };
     },
   });
 };

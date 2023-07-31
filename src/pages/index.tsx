@@ -2,15 +2,20 @@ import Header from "@/components/Header";
 import { useGetCurrentUserQuery, useLoginMutation } from "@/queries/auth";
 import Head from "next/head";
 import { useState } from "react";
+import { NextPageWithProperties } from "./_app";
+import { useRouter } from "next/router";
 
-export default function Home() {
+const Home: NextPageWithProperties = () => {
   const [email, setEmail] = useState("john@gmail.com");
   const [password, setPassword] = useState("secret");
   const mutation = useLoginMutation();
-  const currentUser = useGetCurrentUserQuery();
+  const router = useRouter();
 
   const onSubmit = async () => {
     await mutation.mutate({ email, password });
+    setTimeout(() => {
+      router.push("/protected");
+    }, 300);
   };
   return (
     <>
@@ -66,4 +71,8 @@ export default function Home() {
       </main>
     </>
   );
-}
+};
+
+Home.isPublic = true;
+
+export default Home;
